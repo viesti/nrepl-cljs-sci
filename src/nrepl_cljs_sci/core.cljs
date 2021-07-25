@@ -43,7 +43,7 @@
 (defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error]}]
   (let [reader (sci/reader code)
         result (try
-                 {"value" (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader))
+                 {"value" (js->clj (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader)))
                   "status" ["done"]}
                  (catch :default e
                    (sci/alter-var-root sci-last-error (constantly e))
