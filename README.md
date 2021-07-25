@@ -44,5 +44,10 @@ user=> (with-open [conn (nrepl/connect :port 7788)]
   #_=>   (let [response (nrepl/message (nrepl/client conn 1000) {:op "eval" :code "(+ 1 1)"})]
   #_=>     (println response)))
 ({:id d4c78721-61de-4b20-a428-2fa941d49eb1, :ns user, :status [done], :value 2})
+;; JS interop works too
+user=> (with-open [conn (nrepl/connect :port 7788)]
+  #_=>   (let [response (nrepl/message (nrepl/client conn 1000) {:op "eval" :code "js/process.version"})]
+  #_=>     (println response)))
+({:id 33a0dea9-a14c-42df-887f-5334fcc091f2, :ns user, :status [done], :value v14.16.0})
 ```
 
