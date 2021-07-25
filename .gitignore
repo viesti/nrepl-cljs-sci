@@ -1,0 +1,5 @@
+.shadow-cljs
+node_modules
+out
+.nrepl-port
+.cpcache

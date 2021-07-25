@@ -1,0 +1,12 @@
+{:source-paths ["src" "test"]
+ :dependencies [[io.nervous/cljs-nodejs-externs "0.2.0"]
+                [borkdude/sci "0.2.6"]
+                [com.taoensso/timbre "5.1.2"]]
+ :builds {:app {:target :node-library
+                :output-to "out/dist.js"
+                :exports {:start_server nrepl-cljs-sci.core/start-server
+                          :stop_server nrepl-cljs-sci.core/stop-server}
+                :compiler-options {:infer-externs :auto}}
+          :test {:target :node-test
+                 :output-to "target/test/test.js"
+                 :autorun true}}}

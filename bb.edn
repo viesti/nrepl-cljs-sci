@@ -1,0 +1,5 @@
+{:tasks
+ {shadow-server (shell "npx shadow-cljs server")
+  shadow-compile (shell "npx shadow-cljs compile :app")
+  node-server (shell "node run-server.js")
+  nrepl-client (shell "clojure -M:repl/rebel")}}
