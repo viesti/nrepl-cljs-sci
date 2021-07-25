@@ -25,7 +25,8 @@
 (defn eval-ctx-mw [handler]
   (let [last-ns (atom @sci/ns)
         last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
-        ctx (sci/init {:namespaces {'clojure.core {'*e last-error}}})]
+        ctx (sci/init {:namespaces {'clojure.core {'*e last-error}}
+                       :classes {'js goog/global :allow :all}})]
     (fn [request]
       (handler (assoc request
                       :sci-last-ns last-ns
