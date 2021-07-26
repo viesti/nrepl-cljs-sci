@@ -42,19 +42,25 @@
           "clone" {}}
    "status" ["done"]})
 
-(defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error]}]
-  (let [reader (sci/reader code)
-        result (try
-                 {"value" (str (js->clj (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader))))
-                  "status" ["done"]}
-                 (catch :default e
-                   (sci/alter-var-root sci-last-error (constantly e))
-                   {"ex" (str e)
-                    "status" ["done"]}))
-        ns (sci/eval-string* sci-ctx "*ns*")]
-    (reset! sci-last-ns ns)
-    (assoc result
-           "ns" (str ns))))
+(defn handle-eval [{:keys [ns code sci-ctx sci-last-ns sci-last-error]}]
+  (sci/binding [sci/ns (or (when ns
+                             (symbol ns))
+                           @sci/ns)]
+    (let [reader (sci/reader code)
+          next-val (sci/parse-next sci-ctx reader)
+          result (if (= :sci.core/eof next-val)
+                   {"status" ["done"]}
+                   (try
+                     {"value" (pr-str (js->clj (sci/eval-form sci-ctx next-val)))
+                      "status" ["done"]}
+                     (catch :default e
+                       (sci/alter-var-root sci-last-error (constantly e))
+                       {"ex" (str e)
+                        "status" ["done"]})))
+          ns (sci/eval-string* sci-ctx "*ns*")]
+      (reset! sci-last-ns ns)
+      (assoc result
+             "ns" (str ns)))))
 
 (defn handle-clone []
   {"new-session" (uuid/v4)
