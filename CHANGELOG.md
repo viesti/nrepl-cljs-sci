@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.5
+
+* Fix describe op
+* Use pr-str for eval result
+* Fix ns binding in eval op
+* Include ns in exception response
+
 ## 0.0.4
 
 * Allow to send multiple responses. Improve eval (thanks! @borkdude).
