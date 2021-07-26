@@ -46,9 +46,12 @@
                            "clone" {}}
                     "status" ["done"]}))
 
+(defn the-sci-ns [ctx ns-sym]
+  (sci/eval-form ctx (list 'clojure.core/the-ns (list 'quote ns-sym))))
+
 (defn handle-eval [{:keys [ns code sci-ctx sci-last-ns sci-last-error] :as request} send-fn]
   (sci/binding [sci/ns (or (when ns
-                             (symbol ns))
+                             (the-sci-ns sci-ctx (symbol ns)))
                            @sci/ns)]
     (let [reader (sci/reader code)]
       (try
