@@ -57,7 +57,7 @@
             (let[result (sci/eval-form sci-ctx next-val)
                  ns (sci/eval-string* sci-ctx "*ns*")]
               (reset! sci-last-ns ns)
-              (send-fn request {"value" (str result)
+              (send-fn request {"value" (pr-str result)
                                 "ns" (str ns)})))
           (send-fn request {"status" ["done"]}))
         (catch :default e
