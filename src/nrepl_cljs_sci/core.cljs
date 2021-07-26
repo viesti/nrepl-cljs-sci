@@ -47,19 +47,24 @@
             "clone" {}}
      "status" ["done"]}))
 
-(defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error] :as request} send-fn]
-  (let [reader (sci/reader code)]
-    (try
-      (let [result (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader))
-            ns (sci/eval-string* sci-ctx "*ns*")]
-        (reset! sci-last-ns ns)
-        (send-fn request {"value" (str result)
-                          "ns" (str ns)})
-        (send-fn request {"status" ["done"]}))
-      (catch :default e
-        (sci/alter-var-root sci-last-error (constantly e))
-        (send-fn request {"ex" (str e)
-                          "status" ["done"]})))))
+(defn handle-eval [{:keys [ns code sci-ctx sci-last-ns sci-last-error] :as request} send-fn]
+  (sci/binding [sci/ns (or (when ns
+                             (symbol ns))
+                           @sci/ns)]
+    (let [reader (sci/reader code)]
+      (try
+        (let [next-val (sci/parse-next sci-ctx reader)]
+          (when-not (= :sci.core/eof next-val)
+            (let[result (sci/eval-form sci-ctx next-val)
+                 ns (sci/eval-string* sci-ctx "*ns*")]
+              (reset! sci-last-ns ns)
+              (send-fn request {"value" (str result)
+                                "ns" (str ns)})))
+          (send-fn request {"status" ["done"]}))
+        (catch :default e
+          (sci/alter-var-root sci-last-error (constantly e))
+          (send-fn request {"ex" (str e)
+                            "status" ["done"]}))))))
 
 (defn handle-clone [request send-fn]
   (send-fn request {"new-session" (uuid/v4)
