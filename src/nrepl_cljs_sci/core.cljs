@@ -66,6 +66,7 @@
         (catch :default e
           (sci/alter-var-root sci-last-error (constantly e))
           (send-fn request {"ex" (str e)
+                            "ns" (str (sci/eval-string* sci-ctx "*ns*"))
                             "status" ["done"]}))))))
 
 (defn handle-clone [request send-fn]
