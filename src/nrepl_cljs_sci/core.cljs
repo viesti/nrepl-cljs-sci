@@ -45,7 +45,7 @@
 (defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error]}]
   (let [reader (sci/reader code)
         result (try
-                 {"value" (js->clj (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader)))
+                 {"value" (str (js->clj (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader))))
                   "status" ["done"]}
                  (catch :default e
                    (sci/alter-var-root sci-last-error (constantly e))
@@ -79,10 +79,10 @@
 (defn on-connect [socket]
   (timbre/debug "Connection accepted")
   (.setNoDelay ^node-net/Socket socket true)
-  (.on ^node-net/Socket socket "data"
-       (fn [data]
-         (let [[requests _] (decode-all data :keywordize-keys true)]
-           (doseq [request requests]
+    (.on ^node-net/Socket socket "data"
+         (fn [data]
+           (let [[requests _] (decode-all data :keywordize-keys true)]
+             (doseq [request requests]
              (.write socket (encode (handler request)))))))
   (.on ^node-net/Socket socket "close"
        (fn [had-error?]
