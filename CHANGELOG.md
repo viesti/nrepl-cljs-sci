@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.4
+
+* Allow to send multiple responses. Improve eval (thanks! @borkdude).
+
 ## 0.0.3
 
 * Remove .lsp directory from node module
