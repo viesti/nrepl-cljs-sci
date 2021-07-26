@@ -2,6 +2,10 @@
 
 [nREPL](https://nrepl.org/nrepl/0.8/index.html) server for NodeJS using [SCI](https://github.com/borkdude/sci).
 
+## Usage
+
+See [example](./example) directory
+
 ## Development instructions
 
 1. Start shadow-cljs server (for faster compile invocations)
