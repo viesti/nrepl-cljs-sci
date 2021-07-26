@@ -2,7 +2,8 @@
   (:require [net :as node-net]
             [nrepl-cljs-sci.bencode :refer [encode decode-all]]
             [sci.core :as sci]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            ["uuid" :as uuid]))
 
 (defn response-for-mw [handler]
   (fn [{:keys [id session] :as request}]
@@ -37,7 +38,8 @@
   {"versions" (js->clj js/process.versions)
    "aux" {}
    "ops" {"describe" {}
-          "eval" {}}
+          "eval" {}
+          "clone" {}}
    "status" ["done"]})
 
 (defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error]}]
@@ -54,10 +56,15 @@
     (assoc result
            "ns" (str ns))))
 
+(defn handle-clone []
+  {"new-session" (uuid/v4)
+   "status" ["done"]})
+
 (defn handle-request [{:keys [op] :as request}]
   (case op
     :describe (handle-describe)
     :eval (handle-eval request)
+    :clone (handle-clone)
     (do
       (timbre/warn "Unhandled operation" op)
       {"status" ["done"]})))
