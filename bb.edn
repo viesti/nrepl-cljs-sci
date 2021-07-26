@@ -1,5 +1,7 @@
 {:tasks
  {shadow-server (shell "npx shadow-cljs server")
   shadow-compile (shell "npx shadow-cljs compile :app")
+  release (shell "npx shadow-cljs --force-spawn release app")
+  publish (shell "npm publish")
   node-server (shell "node run-server.js")
   nrepl-client (shell "clojure -M:repl/rebel")}}

@@ -51,3 +51,6 @@ user=> (with-open [conn (nrepl/connect :port 7788)]
 ({:id 0360a3a9-7899-417b-a195-ff999e0d2486, :ns user, :status [done], :value {:nghttp2 1.41.0, :napi 7, :modules 83, :brotli 1.0.9, :zlib 1.2.11, :tz 2020a, :v8 8.4.371.19-node.18, :node 14.16.0, :openssl 1.1.1j, :icu 67.1, :cldr 37.0, :ares 1.16.1, :llhttp 2.1.3, :unicode 13.0, :uv 1.40.0}})
 ```
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md)

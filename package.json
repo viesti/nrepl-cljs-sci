@@ -1,6 +1,18 @@
 {
+  "name": "nrepl-cljs-sci",
+  "version": "0.0.1",
+  "description": "nREPL server for nodejs using Small Clojure Interpreter (SCI)",
+  "main": "out/dist.js",
+  "scripts": {
+    "prepare": "bb release"
+  },
   "devDependencies": {
     "shadow-cljs": "^2.15.2",
     "source-map-support": "^0.5.19"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/viesti/nrepl-cljs-sci"
+  },
+  "license": "MIT"
 }
