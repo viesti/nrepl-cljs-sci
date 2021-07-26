@@ -6,84 +6,98 @@
             ["uuid" :as uuid]))
 
 (defn response-for-mw [handler]
-  (fn [{:keys [id session] :as request}]
-    (let [response (handler request)]
-      (cond-> (assoc response
-                     "id" id)
-        session (assoc "session" session)))))
+  (fn [{:keys [id session] :as request} response]
+    (let [response (cond-> (assoc response
+                                  "id" id)
+                     session (assoc "session" session))]
+      (handler request response))))
 
 (defn coerce-request-mw [handler]
-  (fn [request]
-    (handler (update request :op keyword))))
+  (fn [request send-fn]
+    (handler (update request :op keyword) send-fn)))
 
-(defn log-mw [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (timbre/debug "request" request)
-      (timbre/debug "response" response)
-      response)))
+(defn log-request-mw [handler]
+  (fn [request send-fn]
+    (timbre/debug "request" request)
+    (handler request send-fn)))
+
+(defn log-response-mw [handler]
+  (fn [request response]
+    (timbre/debug "response" response)
+    (handler request response)))
 
 (defn eval-ctx-mw [handler]
   (let [last-ns (atom @sci/ns)
         last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
         ctx (sci/init {:namespaces {'clojure.core {'*e last-error}}
                        :classes {'js goog/global :allow :all}})]
-    (fn [request]
+    (fn [request send-fn]
       (handler (assoc request
                       :sci-last-ns last-ns
                       :sci-last-error last-error
-                      :sci-ctx ctx)))))
+                      :sci-ctx ctx)
+               send-fn))))
 
-(defn handle-describe []
-  {"versions" (js->clj js/process.versions)
-   "aux" {}
-   "ops" {"describe" {}
-          "eval" {}
-          "clone" {}}
-   "status" ["done"]})
+(defn handle-describe [_request send-fn]
+  (send-fn
+    {"versions" (js->clj js/process.versions)
+     "aux" {}
+     "ops" {"describe" {}
+            "eval" {}
+            "clone" {}}
+     "status" ["done"]}))
 
-(defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error]}]
-  (let [reader (sci/reader code)
-        result (try
-                 {"value" (str (js->clj (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader))))
-                  "status" ["done"]}
-                 (catch :default e
-                   (sci/alter-var-root sci-last-error (constantly e))
-                   {"ex" (str e)
+(defn handle-eval [{:keys [code sci-ctx sci-last-ns sci-last-error] :as request} send-fn]
+  (let [reader (sci/reader code)]
+    (try
+      (let [result (sci/eval-form sci-ctx (sci/parse-next sci-ctx reader))
+            ns (sci/eval-string* sci-ctx "*ns*")]
+        (reset! sci-last-ns ns)
+        (send-fn request {"value" (str result)
+                          "ns" (str ns)})
+        (send-fn request {"status" ["done"]}))
+      (catch :default e
+        (sci/alter-var-root sci-last-error (constantly e))
+        (send-fn request {"ex" (str e)
+                          "status" ["done"]})))))
+
+(defn handle-clone [request send-fn]
+  (send-fn request {"new-session" (uuid/v4)
                     "status" ["done"]}))
-        ns (sci/eval-string* sci-ctx "*ns*")]
-    (reset! sci-last-ns ns)
-    (assoc result
-           "ns" (str ns))))
 
-(defn handle-clone []
-  {"new-session" (uuid/v4)
-   "status" ["done"]})
-
-(defn handle-request [{:keys [op] :as request}]
+(defn handle-request [{:keys [op] :as request} send-fn]
   (case op
-    :describe (handle-describe)
-    :eval (handle-eval request)
-    :clone (handle-clone)
+    :describe (handle-describe request send-fn)
+    :eval (handle-eval request send-fn)
+    :clone (handle-clone request send-fn)
     (do
       (timbre/warn "Unhandled operation" op)
-      {"status" ["done"]})))
+      (send-fn request {"status" ["done"]}))))
 
 (def handler
   (-> handle-request
       coerce-request-mw
       eval-ctx-mw
-      response-for-mw
-      log-mw))
+      log-request-mw))
+
+(defn make-send-fn [socket]
+  (fn [_request response]
+    (.write socket (encode response))))
+
+(defn make-reponse-handler [socket]
+  (-> (make-send-fn socket)
+      log-response-mw
+      response-for-mw))
 
 (defn on-connect [socket]
   (timbre/debug "Connection accepted")
   (.setNoDelay ^node-net/Socket socket true)
+  (let [response-handler (make-reponse-handler socket)]
     (.on ^node-net/Socket socket "data"
          (fn [data]
            (let [[requests _] (decode-all data :keywordize-keys true)]
              (doseq [request requests]
-             (.write socket (encode (handler request)))))))
+               (handler request response-handler))))))
   (.on ^node-net/Socket socket "close"
        (fn [had-error?]
          (if had-error?
