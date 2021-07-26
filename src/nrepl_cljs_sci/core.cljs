@@ -38,14 +38,13 @@
                       :sci-ctx ctx)
                send-fn))))
 
-(defn handle-describe [_request send-fn]
-  (send-fn
-    {"versions" (js->clj js/process.versions)
-     "aux" {}
-     "ops" {"describe" {}
-            "eval" {}
-            "clone" {}}
-     "status" ["done"]}))
+(defn handle-describe [request send-fn]
+  (send-fn request {"versions" (js->clj js/process.versions)
+                    "aux" {}
+                    "ops" {"describe" {}
+                           "eval" {}
+                           "clone" {}}
+                    "status" ["done"]}))
 
 (defn handle-eval [{:keys [ns code sci-ctx sci-last-ns sci-last-error] :as request} send-fn]
   (sci/binding [sci/ns (or (when ns
