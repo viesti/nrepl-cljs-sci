@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.6
+
+* Support js/require
+
 ## 0.0.5
 
 * Fix describe op
