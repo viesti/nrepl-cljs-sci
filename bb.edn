@@ -1,5 +1,5 @@
 {:tasks
- {shadow-server (shell "npx shadow-cljs server")
+ {shadow-server (shell "clj -M -m shadow.cljs.devtools.cli server")
   shadow-compile (shell "npx shadow-cljs compile :app")
   shadow-node-repl (shell "npx shadow-cljs node-repl")
   release (shell "npx shadow-cljs --force-spawn release app")

@@ -1,4 +1,11 @@
-{:aliases {:repl/rebel
+{:paths ["src" "test"]
+ :deps {thheller/shadow-cljs {:mvn/version "2.15.2"}
+        io.nervous/cljs-nodejs-externs {:mvn/version "0.2.0"}
+        borkdude/sci {:mvn/version "0.2.6"}
+        com.taoensso/timbre {:mvn/version "5.1.2"}
+        org.clojure/data.json {:mvn/version "2.4.0"} ;; For reading package.json ad build time
+        }
+ :aliases {:repl/rebel
            {:extra-deps {nrepl/nrepl                {:mvn/version "0.8.3"}
                          cider/cider-nrepl          {:mvn/version "0.26.0"}
                          com.bhauman/rebel-readline {:mvn/version "0.1.4"}}
