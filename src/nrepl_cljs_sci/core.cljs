@@ -26,11 +26,15 @@
     (timbre/debug "response" response)
     (handler request response)))
 
+;; require is missing from goog.global, so let's expose it
+(set! (.-require js/goog.global) js/require)
+
 (defn eval-ctx-mw [handler]
   (let [last-ns (atom @sci/ns)
         last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
         ctx (sci/init {:namespaces {'clojure.core {'*e last-error}}
-                       :classes {'js goog/global :allow :all}})]
+                       :classes {'js goog/global
+                                 :allow :all}})]
     (fn [request send-fn]
       (handler (assoc request
                       :sci-last-ns last-ns
