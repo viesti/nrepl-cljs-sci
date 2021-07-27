@@ -77,11 +77,15 @@
   (send-fn request {"new-session" (uuid/v4)
                     "status" ["done"]}))
 
+(defn handle-close [request send-fn]
+  (send-fn request {"status" ["done"]}))
+
 (defn handle-request [{:keys [op] :as request} send-fn]
   (case op
     :describe (handle-describe request send-fn)
     :eval (handle-eval request send-fn)
     :clone (handle-clone request send-fn)
+    :close (handle-close request send-fn)
     (do
       (timbre/warn "Unhandled operation" op)
       (send-fn request {"status" ["done"]}))))
