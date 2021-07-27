@@ -30,12 +30,13 @@
 ;; require is missing from goog.global, so let's expose it
 (set! (.-require js/goog.global) js/require)
 
-(defn eval-ctx-mw [handler]
+(defn eval-ctx-mw [handler ctx]
   (let [last-ns (atom @sci/ns)
         last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
-        ctx (sci/init {:namespaces {'clojure.core {'*e last-error}}
-                       :classes {'js goog/global
-                                 :allow :all}})]
+        ctx (or ctx
+                (sci/init {:namespaces {'clojure.core {'*e last-error}}
+                           :classes {'js goog/global
+                                     :allow :all}}))]
     (fn [request send-fn]
       (handler (assoc request
                       :sci-last-ns last-ns
@@ -92,10 +93,10 @@
       (timbre/warn "Unhandled operation" op)
       (send-fn request {"status" ["done"]}))))
 
-(def handler
+(defn make-request-handler [ctx]
   (-> handle-request
       coerce-request-mw
-      eval-ctx-mw
+      (eval-ctx-mw ctx)
       log-request-mw))
 
 (defn make-send-fn [socket]
@@ -107,10 +108,11 @@
       log-response-mw
       response-for-mw))
 
-(defn on-connect [socket]
+(defn on-connect [ctx socket]
   (timbre/debug "Connection accepted")
   (.setNoDelay ^node-net/Socket socket true)
-  (let [response-handler (make-reponse-handler socket)]
+  (let [handler (make-request-handler ctx)
+        response-handler (make-reponse-handler socket)]
     (.on ^node-net/Socket socket "data"
          (fn [data]
            (let [[requests _] (decode-all data :keywordize-keys true)]
@@ -123,11 +125,12 @@
            (timbre/debug "Connection closed")))))
 
 (defn start-server [opts]
-  (let [{:keys [port log_level] :or {port 7080
-                                     log_level "info"} :as _opts} (if (object? opts)
-                                                                    (js->clj opts :keywordize-keys true)
-                                                                    opts)
-        server (node-net/createServer on-connect)]
+  (let [{:keys [port log_level ctx]
+         :or {port 7080
+              log_level "info"} :as _opts} (if (object? opts)
+                                             (js->clj opts :keywordize-keys true)
+                                             opts)
+        server (node-net/createServer (partial on-connect ctx))]
     (timbre/set-level! (keyword log_level))
     (.listen server
              port
