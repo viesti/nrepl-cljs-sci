@@ -3,7 +3,8 @@
             [nrepl-cljs-sci.bencode :refer [encode decode-all]]
             [sci.core :as sci]
             [taoensso.timbre :as timbre]
-            ["uuid" :as uuid]))
+            ["uuid" :as uuid])
+  (:require-macros [nrepl-cljs-sci.version :as version]))
 
 (defn response-for-mw [handler]
   (fn [{:keys [id session] :as request} response]
@@ -43,7 +44,8 @@
                send-fn))))
 
 (defn handle-describe [request send-fn]
-  (send-fn request {"versions" (js->clj js/process.versions)
+  (send-fn request {"versions" (merge (js->clj js/process.versions)
+                                      {"nrepl-cljs-sci" (version/get-version)})
                     "aux" {}
                     "ops" {"describe" {}
                            "eval" {}
@@ -130,7 +132,7 @@
     (.listen server
              port
              (fn []
-               (timbre/info "Server started")))
+               (timbre/infof "Server started, version %s" (version/get-version))))
     server))
 
 (defn stop-server [server]
