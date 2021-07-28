@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.7
+
+* Report nrepl-cljs-sci version at server start and in describe op
+* Used deps.edn for deps (allows local overrides)
+* Allow passing existing ctx
+* Preserve evaluation context over multiple connections
+
 ## 0.0.6
 
 * Support js/require

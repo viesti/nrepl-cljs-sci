@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "nrepl-cljs-sci": "0.0.6"
+    "nrepl-cljs-sci": "0.0.7"
   }
 }
