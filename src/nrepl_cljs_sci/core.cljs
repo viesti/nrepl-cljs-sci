@@ -30,19 +30,12 @@
 ;; require is missing from goog.global, so let's expose it
 (set! (.-require js/goog.global) js/require)
 
-(defn eval-ctx-mw [handler ctx]
-  (let [last-ns (atom @sci/ns)
-        last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
-        ctx (or ctx
-                (sci/init {:namespaces {'clojure.core {'*e last-error}}
-                           :classes {'js goog/global
-                                     :allow :all}}))]
-    (fn [request send-fn]
-      (handler (assoc request
-                      :sci-last-ns last-ns
-                      :sci-last-error last-error
-                      :sci-ctx ctx)
-               send-fn))))
+(defn eval-ctx-mw [handler {:keys [sci-last-error sci-ctx]}]
+  (fn [request send-fn]
+    (handler (assoc request
+                    :sci-last-error sci-last-error
+                    :sci-ctx sci-ctx)
+             send-fn)))
 
 (defn handle-describe [request send-fn]
   (send-fn request {"versions" (merge (js->clj js/process.versions)
@@ -56,7 +49,7 @@
 (defn the-sci-ns [ctx ns-sym]
   (sci/eval-form ctx (list 'clojure.core/the-ns (list 'quote ns-sym))))
 
-(defn handle-eval [{:keys [ns code sci-ctx sci-last-ns sci-last-error] :as request} send-fn]
+(defn handle-eval [{:keys [ns code sci-ctx sci-last-error] :as request} send-fn]
   (sci/binding [sci/ns (or (when ns
                              (the-sci-ns sci-ctx (symbol ns)))
                            @sci/ns)]
@@ -66,7 +59,6 @@
           (when-not (= :sci.core/eof next-val)
             (let[result (sci/eval-form sci-ctx next-val)
                  ns (sci/eval-string* sci-ctx "*ns*")]
-              (reset! sci-last-ns ns)
               (send-fn request {"value" (pr-str result)
                                 "ns" (str ns)})))
           (send-fn request {"status" ["done"]}))
@@ -93,10 +85,10 @@
       (timbre/warn "Unhandled operation" op)
       (send-fn request {"status" ["done"]}))))
 
-(defn make-request-handler [ctx]
+(defn make-request-handler [opts]
   (-> handle-request
       coerce-request-mw
-      (eval-ctx-mw ctx)
+      (eval-ctx-mw opts)
       log-request-mw))
 
 (defn make-send-fn [socket]
@@ -108,10 +100,10 @@
       log-response-mw
       response-for-mw))
 
-(defn on-connect [ctx socket]
+(defn on-connect [opts socket]
   (timbre/debug "Connection accepted")
   (.setNoDelay ^node-net/Socket socket true)
-  (let [handler (make-request-handler ctx)
+  (let [handler (make-request-handler opts)
         response-handler (make-reponse-handler socket)]
     (.on ^node-net/Socket socket "data"
          (fn [data]
@@ -130,7 +122,12 @@
               log_level "info"} :as _opts} (if (object? opts)
                                              (js->clj opts :keywordize-keys true)
                                              opts)
-        server (node-net/createServer (partial on-connect ctx))]
+        sci-last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
+        server (node-net/createServer (partial on-connect {:sci-ctx (or ctx
+                                                                        (sci/init {:namespaces {'clojure.core {'*e sci-last-error}}
+                                                                                   :classes {'js goog/global
+                                                                                             :allow :all}}))
+                                                           :sci-last-error sci-last-error}))]
     (timbre/set-level! (keyword log_level))
     (.listen server
              port
