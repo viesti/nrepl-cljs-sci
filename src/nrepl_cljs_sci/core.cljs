@@ -3,7 +3,9 @@
             [nrepl-cljs-sci.bencode :refer [encode decode-all]]
             [sci.core :as sci]
             [taoensso.timbre :as timbre]
-            ["uuid" :as uuid])
+            ["uuid" :as uuid]
+            [clojure.string :as str]
+            [goog.string :as gstr])
   (:require-macros [nrepl-cljs-sci.version :as version]))
 
 (defn response-for-mw [handler]
@@ -30,11 +32,11 @@
 ;; require is missing from goog.global, so let's expose it
 (set! (.-require js/goog.global) js/require)
 
-(defn eval-ctx-mw [handler {:keys [sci-last-error sci-ctx]}]
+(defn eval-ctx-mw [handler {:keys [sci-last-error sci-ctx-atom]}]
   (fn [request send-fn]
     (handler (assoc request
                     :sci-last-error sci-last-error
-                    :sci-ctx sci-ctx)
+                    :sci-ctx-atom sci-ctx-atom)
              send-fn)))
 
 (defn handle-describe [request send-fn]
@@ -49,24 +51,26 @@
 (defn the-sci-ns [ctx ns-sym]
   (sci/eval-form ctx (list 'clojure.core/the-ns (list 'quote ns-sym))))
 
-(defn handle-eval [{:keys [ns code sci-ctx sci-last-error] :as request} send-fn]
-  (sci/binding [sci/ns (or (when ns
-                             (the-sci-ns sci-ctx (symbol ns)))
-                           @sci/ns)]
-    (let [reader (sci/reader code)]
-      (try
-        (let [next-val (sci/parse-next sci-ctx reader)]
-          (when-not (= :sci.core/eof next-val)
-            (let[result (sci/eval-form sci-ctx next-val)
-                 ns (sci/eval-string* sci-ctx "*ns*")]
-              (send-fn request {"value" (pr-str result)
-                                "ns" (str ns)})))
-          (send-fn request {"status" ["done"]}))
-        (catch :default e
-          (sci/alter-var-root sci-last-error (constantly e))
-          (send-fn request {"ex" (str e)
-                            "ns" (str (sci/eval-string* sci-ctx "*ns*"))
-                            "status" ["done"]}))))))
+(defn handle-eval [{:keys [ns code sci-last-error sci-ctx-atom] :as request} send-fn]
+  (let [sci-ctx @sci-ctx-atom]
+    (sci/binding [sci/ns (or (when ns
+                               (the-sci-ns sci-ctx (symbol ns)))
+                             @sci/ns)]
+      (let [reader (sci/reader code)]
+        (try
+          (loop [next-val (sci/parse-next sci-ctx reader)]
+            (when-not (= :sci.core/eof next-val)
+              (let[result (sci/eval-form sci-ctx next-val)
+                   ns (sci/eval-string* sci-ctx "*ns*")]
+                (send-fn request {"value" (pr-str result)
+                                  "ns" (str ns)})
+                (recur (sci/parse-next sci-ctx reader)))))
+          (send-fn request {"status" ["done"]})
+          (catch :default e
+            (sci/alter-var-root sci-last-error (constantly e))
+            (send-fn request {"ex" (str e)
+                              "ns" (str (sci/eval-string* sci-ctx "*ns*"))
+                              "status" ["done"]})))))))
 
 (defn handle-clone [request send-fn]
   (send-fn request {"new-session" (uuid/v4)
@@ -116,6 +120,22 @@
            (timbre/debug "Connection lost")
            (timbre/debug "Connection closed")))))
 
+(defn load-fn [ctx-atom {:keys [namespace]
+                         {:keys [as]} :opts}]
+  (when (string? namespace) ;; support cljs string require, e.g. (require '["lib" :as lib])
+    (let [ctx @ctx-atom
+          ns (js/require namespace)
+          current-ns (sci/eval-string* ctx "*ns*")
+          new-ctx (sci/merge-opts ctx {:classes {(symbol namespace) ns
+                                                 (symbol as) ns}})
+          source (str/join " " [(gstr/format "(ns-unmap '%s '%s)" current-ns namespace)
+                                (gstr/format "(ns-unmap '%s '%s)" current-ns as)
+                                (gstr/format "(def %s (js/require \"%s\"))" namespace namespace)
+                                (gstr/format "(def %s %s)" as namespace)])]
+      (reset! ctx-atom new-ctx)
+      {:file namespace
+       :source source})))
+
 (defn start-server [opts]
   (let [{:keys [port log_level ctx]
          :or {port 7080
@@ -123,11 +143,15 @@
                                              (js->clj opts :keywordize-keys true)
                                              opts)
         sci-last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
-        server (node-net/createServer (partial on-connect {:sci-ctx (or ctx
-                                                                        (sci/init {:namespaces {'clojure.core {'*e sci-last-error}}
-                                                                                   :classes {'js goog/global
-                                                                                             :allow :all}}))
-                                                           :sci-last-error sci-last-error}))]
+        ctx-atom (atom nil)
+        ctx (or ctx
+                (sci/init {:namespaces {'clojure.core {'*e sci-last-error}}
+                           :classes {'js goog/global
+                                     :allow :all}
+                           :load-fn (partial load-fn ctx-atom)}))
+        server (node-net/createServer (partial on-connect {:sci-last-error sci-last-error
+                                                           :sci-ctx-atom ctx-atom}))]
+    (reset! ctx-atom ctx)
     (timbre/set-level! (keyword log_level))
     (.listen server
              port
