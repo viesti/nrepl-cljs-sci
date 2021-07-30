@@ -52,25 +52,25 @@
   (sci/eval-form ctx (list 'clojure.core/the-ns (list 'quote ns-sym))))
 
 (defn handle-eval [{:keys [ns code sci-last-error sci-ctx-atom] :as request} send-fn]
-  (let [sci-ctx @sci-ctx-atom]
-    (sci/binding [sci/ns (or (when ns
-                               (the-sci-ns sci-ctx (symbol ns)))
-                             @sci/ns)]
-      (let [reader (sci/reader code)]
-        (try
-          (loop [next-val (sci/parse-next sci-ctx reader)]
-            (when-not (= :sci.core/eof next-val)
-              (let[result (sci/eval-form sci-ctx next-val)
-                   ns (sci/eval-string* sci-ctx "*ns*")]
-                (send-fn request {"value" (pr-str result)
-                                  "ns" (str ns)})
-                (recur (sci/parse-next sci-ctx reader)))))
-          (send-fn request {"status" ["done"]})
-          (catch :default e
-            (sci/alter-var-root sci-last-error (constantly e))
-            (send-fn request {"ex" (str e)
-                              "ns" (str (sci/eval-string* sci-ctx "*ns*"))
-                              "status" ["done"]})))))))
+  (sci/binding [sci/ns (or (when ns
+                             (the-sci-ns @sci-ctx-atom (symbol ns)))
+                           @sci/ns)]
+    (let [reader (sci/reader code)]
+      (try
+        (loop [next-val (sci/parse-next @sci-ctx-atom reader)]
+          (println "next-val" next-val)
+          (when-not (= :sci.core/eof next-val)
+            (let[result (sci/eval-form @sci-ctx-atom next-val)
+                 ns (sci/eval-string* @sci-ctx-atom "*ns*")]
+              (send-fn request {"value" (pr-str result)
+                                "ns" (str ns)})
+              (recur (sci/parse-next @sci-ctx-atom reader)))))
+        (send-fn request {"status" ["done"]})
+        (catch :default e
+          (sci/alter-var-root sci-last-error (constantly e))
+          (send-fn request {"ex" (str e)
+                            "ns" (str (sci/eval-string* @sci-ctx-atom "*ns*"))
+                            "status" ["done"]}))))))
 
 (defn handle-clone [request send-fn]
   (send-fn request {"new-session" (uuid/v4)
