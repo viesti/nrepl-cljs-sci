@@ -3,9 +3,7 @@
             [nrepl-cljs-sci.bencode :refer [encode decode-all]]
             [sci.core :as sci]
             [taoensso.timbre :as timbre]
-            ["uuid" :as uuid]
-            [clojure.string :as str]
-            [goog.string :as gstr])
+            ["uuid" :as uuid])
   (:require-macros [nrepl-cljs-sci.version :as version]))
 
 (defn response-for-mw [handler]
