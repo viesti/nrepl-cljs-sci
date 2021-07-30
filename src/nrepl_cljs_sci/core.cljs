@@ -37,13 +37,13 @@
                     :sci-ctx-atom sci-ctx-atom)
              send-fn)))
 
+(declare ops)
+
 (defn handle-describe [request send-fn]
   (send-fn request {"versions" (merge (js->clj js/process.versions)
                                       {"nrepl-cljs-sci" (version/get-version)})
                     "aux" {}
-                    "ops" {"describe" {}
-                           "eval" {}
-                           "clone" {}}
+                    "ops" (zipmap (map name (keys ops)) (repeat {}))
                     "status" ["done"]}))
 
 (defn the-sci-ns [ctx ns-sym]
@@ -77,12 +77,16 @@
 (defn handle-close [request send-fn]
   (send-fn request {"status" ["done"]}))
 
+(def ops
+  "Operations supported by the nrepl server"
+  {:eval handle-eval
+   :describe handle-describe
+   :clone handle-clone
+   :close handle-close})
+
 (defn handle-request [{:keys [op] :as request} send-fn]
-  (case op
-    :describe (handle-describe request send-fn)
-    :eval (handle-eval request send-fn)
-    :clone (handle-clone request send-fn)
-    :close (handle-close request send-fn)
+  (if-let [op-fn (get ops op)]
+    (op-fn request send-fn)
     (do
       (timbre/warn "Unhandled operation" op)
       (send-fn request {"status" ["done"]}))))
