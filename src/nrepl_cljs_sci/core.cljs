@@ -125,16 +125,15 @@
   (when (string? namespace) ;; support cljs string require, e.g. (require '["lib" :as lib])
     (let [ctx @ctx-atom
           ns (js/require namespace)
-          current-ns (sci/eval-string* ctx "*ns*")
+          ;; Setup aliases to support interop forms, e.g. (lib/fun) and (lib-as/fun)
           new-ctx (sci/merge-opts ctx {:classes {(symbol namespace) ns
-                                                 (symbol as) ns}})
-          source (str/join " " [(gstr/format "(ns-unmap '%s '%s)" current-ns namespace)
-                                (gstr/format "(ns-unmap '%s '%s)" current-ns as)
-                                (gstr/format "(def %s (js/require \"%s\"))" namespace namespace)
-                                (gstr/format "(def %s %s)" as namespace)])]
+                                                 (symbol as) ns}})]
+      ;; We make new context visible to evaluation, since changes to :classes current don't reflect in the :env atom in the ctx
       (reset! ctx-atom new-ctx)
       {:file namespace
-       :source source})))
+       :source ""
+       ;; We inform SCI to not create a namespace alias
+       :omit-as-alias? true})))
 
 (defn start-server [opts]
   (let [{:keys [port log_level ctx]
