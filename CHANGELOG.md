@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.8
+
+* Support (require '["lib" :as lib]) forms
+* Loop over all forms in eval op
+
 ## 0.0.7
 
 * Report nrepl-cljs-sci version at server start and in describe op
