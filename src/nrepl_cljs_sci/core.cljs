@@ -168,8 +168,9 @@
         ctx-atom (atom nil)
         ctx (or ctx
                 (sci/init {:namespaces {'clojure.core {'*e sci-last-error}
-                                        'clojure.main {'repl-requires (sci/new-var 'repl-requires [])}
-                                        'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}}
+                                        'clojure.main {'repl-requires (sci/new-var 'repl-requires [["os" :as 'os]])}
+                                        'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}
+                                        'sci.internal {'ctx-atom (sci/new-var 'ctx-atom ctx-atom)}}
                            :classes {'js goog/global
                                      'System (let [system (js-obj)]
                                                (set! (.-getProperty system) (fn [prop]
