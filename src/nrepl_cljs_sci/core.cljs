@@ -60,7 +60,7 @@
             (let[result (sci/eval-form @sci-ctx-atom next-val)
                  ns (sci/eval-string* @sci-ctx-atom "*ns*")]
               (when-not load-file?
-              (send-fn request {"value" (pr-str result)
+                (send-fn request {"value" (pr-str result)
                                   "ns" (str ns)}))
               (recur (sci/parse-next @sci-ctx-atom reader)))))
         (send-fn request {"status" ["done"]})
@@ -69,8 +69,8 @@
           (let [data (ex-data e)]
             (when-let [message (or (:message data) (.-message e))]
               (send-fn request {"err" message}))
-          (send-fn request {"ex" (str e)
-                            "ns" (str (sci/eval-string* @sci-ctx-atom "*ns*"))
+            (send-fn request {"ex" (str e)
+                              "ns" (str (sci/eval-string* @sci-ctx-atom "*ns*"))
                               "status" ["done"]})))))))
 
 (defn handle-eval [{:keys [ns sci-ctx-atom] :as request} send-fn]
@@ -163,7 +163,9 @@
         sci-last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
         ctx-atom (atom nil)
         ctx (or ctx
-                (sci/init {:namespaces {'clojure.core {'*e sci-last-error}}
+                (sci/init {:namespaces {'clojure.core {'*e sci-last-error}
+                                        'clojure.main {'repl-requires (sci/new-var 'repl-requires [])}
+                                        'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}}
                            :classes {'js goog/global
                                      :allow :all}
                            :load-fn (partial load-fn ctx-atom)}))
