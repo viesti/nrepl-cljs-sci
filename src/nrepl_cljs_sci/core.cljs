@@ -39,9 +39,14 @@
 
 (declare ops)
 
+(defn version-string->data [v]
+  (assoc (zipmap ["major" "minor" "incremental"]
+                 (js->clj (.split v ".")))
+         "version-string" v))
+
 (defn handle-describe [request send-fn]
-  (send-fn request {"versions" (merge (js->clj js/process.versions)
-                                      {"nrepl-cljs-sci" (version/get-version)})
+  (send-fn request {"versions" {"nrepl-cljs-sci" (version-string->data (version/get-version))
+                                "node" (version-string->data js/process.version)}
                     "aux" {}
                     "ops" (zipmap (map name (keys ops)) (repeat {}))
                     "status" ["done"]}))
