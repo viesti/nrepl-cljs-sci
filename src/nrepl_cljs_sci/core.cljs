@@ -151,7 +151,8 @@
           ns (js/require namespace)
           ;; Setup aliases to support interop forms, e.g. (lib/fun) and (lib-as/fun)
           new-ctx (sci/merge-opts ctx {:classes {(symbol namespace) ns
-                                                 (symbol as) ns}})]
+                                                 (symbol as) ns}
+                                       :load-fn (partial load-fn ctx-atom)})]
       ;; We make new context visible to evaluation, since changes to :classes current don't reflect in the :env atom in the ctx
       (reset! ctx-atom new-ctx)
       {:file namespace
