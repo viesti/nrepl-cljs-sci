@@ -166,6 +166,12 @@
                                         'clojure.main {'repl-requires (sci/new-var 'repl-requires [])}
                                         'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}}
                            :classes {'js goog/global
+                                     'System (let [system (js-obj)]
+                                               (set! (.-getProperty system) (fn [prop]
+                                                                              (if (= "java.class.path" prop)
+                                                                                ""
+                                                                                nil)))
+                                               system)
                                      :allow :all}
                            :load-fn (partial load-fn ctx-atom)}))
         server (node-net/createServer (partial on-connect {:sci-last-error sci-last-error
