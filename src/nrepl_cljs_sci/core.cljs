@@ -155,7 +155,7 @@
 
 (defn start-server [opts]
   (let [{:keys [port log_level ctx]
-         :or {port 7080
+         :or {port 0 ;; Use random port if not specified
               log_level "info"} :as _opts} (if (object? opts)
                                              (js->clj opts :keywordize-keys true)
                                              opts)
@@ -175,7 +175,8 @@
     (.listen server
              port
              (fn []
-               (timbre/infof "Server started, version %s" (version/get-version))))
+               (timbre/infof "Server started, version %s" (version/get-version))
+               (.writeFileSync fs ".nrepl-port" (str (-> server (.address) .-port)))))
     server))
 
 (defn stop-server [server]
