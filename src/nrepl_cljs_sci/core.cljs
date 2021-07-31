@@ -56,7 +56,6 @@
     (let [reader (sci/reader code)]
       (try
         (loop [next-val (sci/parse-next @sci-ctx-atom reader)]
-          (println "next-val" next-val)
           (when-not (= :sci.core/eof next-val)
             (let[result (sci/eval-form @sci-ctx-atom next-val)
                  ns (sci/eval-string* @sci-ctx-atom "*ns*")]
