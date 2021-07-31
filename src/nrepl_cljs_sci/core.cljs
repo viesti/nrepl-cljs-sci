@@ -189,9 +189,18 @@
     (.listen server
              port
              (fn []
-               (timbre/infof "Server started, version %s" (version/get-version))
-               (.writeFileSync fs ".nrepl-port" (str (-> server (.address) .-port)))))
-    server))
+               (let [port (-> server (.address) .-port)]
+                 (timbre/infof "nRepl server started on port %d. nrepl-cljs-sci version %s"
+                               port
+                               (version/get-version))
+                 (.writeFileSync fs ".nrepl-port" (str port)))))
+    server)
+  (let [onExit (js/require "signal-exit")]
+    (onExit (fn [_code _signal]
+              (timbre/debug "Process exit, removing .nrepl-port")
+              (fs/unlinkSync ".nrepl-port")))))
 
 (defn stop-server [server]
-  (.close server))
+  (.close server
+          (fn []
+            (fs/unlinkSync ".nrepl-port"))))

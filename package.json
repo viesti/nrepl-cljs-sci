@@ -1,6 +1,6 @@
 {
   "name": "nrepl-cljs-sci",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "nREPL server for nodejs using Small Clojure Interpreter (SCI)",
   "main": "out/dist.js",
   "scripts": {
@@ -16,6 +16,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "signal-exit": "^3.0.3",
     "uuid": "^8.3.2"
   }
 }

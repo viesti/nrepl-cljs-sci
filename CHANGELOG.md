@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.10
+
+* Print out port number on server start
+* Remove .nrepl-port on server stop & process exit
+
 ## 0.0.9
 
 * Support load-file op
