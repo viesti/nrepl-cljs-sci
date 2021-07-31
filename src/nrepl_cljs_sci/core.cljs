@@ -3,7 +3,8 @@
             [nrepl-cljs-sci.bencode :refer [encode decode-all]]
             [sci.core :as sci]
             [taoensso.timbre :as timbre]
-            ["uuid" :as uuid])
+            ["uuid" :as uuid]
+            ["fs" :as fs])
   (:require-macros [nrepl-cljs-sci.version :as version]))
 
 (defn response-for-mw [handler]
@@ -49,25 +50,34 @@
 (defn the-sci-ns [ctx ns-sym]
   (sci/eval-form ctx (list 'clojure.core/the-ns (list 'quote ns-sym))))
 
-(defn handle-eval [{:keys [ns code sci-last-error sci-ctx-atom] :as request} send-fn]
-  (sci/binding [sci/ns (or (when ns
-                             (the-sci-ns @sci-ctx-atom (symbol ns)))
-                           @sci/ns)]
+(defn do-handle-eval [{:keys [ns code sci-last-error sci-ctx-atom load-file?] :as request} send-fn]
+  (sci/binding [sci/ns ns
+                sci/print-length @sci/print-length]
     (let [reader (sci/reader code)]
       (try
         (loop [next-val (sci/parse-next @sci-ctx-atom reader)]
           (when-not (= :sci.core/eof next-val)
             (let[result (sci/eval-form @sci-ctx-atom next-val)
                  ns (sci/eval-string* @sci-ctx-atom "*ns*")]
+              (when-not load-file?
               (send-fn request {"value" (pr-str result)
-                                "ns" (str ns)})
+                                  "ns" (str ns)}))
               (recur (sci/parse-next @sci-ctx-atom reader)))))
         (send-fn request {"status" ["done"]})
         (catch :default e
           (sci/alter-var-root sci-last-error (constantly e))
+          (let [data (ex-data e)]
+            (when-let [message (or (:message data) (.-message e))]
+              (send-fn request {"err" message}))
           (send-fn request {"ex" (str e)
                             "ns" (str (sci/eval-string* @sci-ctx-atom "*ns*"))
-                            "status" ["done"]}))))))
+                              "status" ["done"]})))))))
+
+(defn handle-eval [{:keys [ns sci-ctx-atom] :as request} send-fn]
+  (do-handle-eval (assoc request :ns (or (when ns
+                                           (the-sci-ns @sci-ctx-atom (symbol ns)))
+                                         @sci/ns))
+                  send-fn))
 
 (defn handle-clone [request send-fn]
   (send-fn request {"new-session" (uuid/v4)
@@ -76,12 +86,20 @@
 (defn handle-close [request send-fn]
   (send-fn request {"status" ["done"]}))
 
+(defn handle-load-file [{:keys [file] :as request} send-fn]
+  (do-handle-eval (assoc request
+                         :code file
+                         :load-file? true
+                         :ns @sci/ns)
+                  send-fn))
+
 (def ops
   "Operations supported by the nrepl server"
   {:eval handle-eval
    :describe handle-describe
    :clone handle-clone
-   :close handle-close})
+   :close handle-close
+   :load-file handle-load-file})
 
 (defn handle-request [{:keys [op] :as request} send-fn]
   (if-let [op-fn (get ops op)]
