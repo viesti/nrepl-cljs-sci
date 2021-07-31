@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.9
+
+* Support load-file op
+* Work better with cider (fake System/getProperty)
+* Write .nrepl-port file on startup, support ephemeral port (leaving port out choosed random port)
+* Fix: Make require work after first use
+
 ## 0.0.8
 
 * Support (require '["lib" :as lib]) forms
