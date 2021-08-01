@@ -1,0 +1,5 @@
+{:deps true
+ :builds {:app {:target :node-script
+                :main example.core/main
+                :output-to "out/app.js"
+                :compiler-options {:infer-externs :auto}}}}

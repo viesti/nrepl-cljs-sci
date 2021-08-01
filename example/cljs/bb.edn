@@ -1,0 +1,2 @@
+{:tasks
+ {compile (shell "clj -M -m shadow.cljs.devtools.cli compile :app")}}

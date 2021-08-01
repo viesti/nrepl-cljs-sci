@@ -1,0 +1,14 @@
+{:paths ["src"]
+ :deps {thheller/shadow-cljs {:mvn/version "2.15.2"}
+        org.clojars.viesti/nrepl-cljs-sci {:mvn/version "0.0.10"}
+        ;; This can go away when can we can use proper sci
+        borkdude/sci {:git/url "https://github.com/viesti/sci"
+                      :sha "8b0a89fd233bb18ecb5f1db3f07efaea181087a3"}}
+ :aliases {:repl/rebel
+           {:extra-deps {nrepl/nrepl                {:mvn/version "0.8.3"}
+                         cider/cider-nrepl          {:mvn/version "0.26.0"}
+                         com.bhauman/rebel-readline {:mvn/version "0.1.4"}}
+            :main-opts  ["-m" "nrepl.cmdline"
+                         "--middleware" "[cider.nrepl/cider-middleware]"
+                         "-i"
+                         "-f" "rebel-readline.main/-main"]}}}

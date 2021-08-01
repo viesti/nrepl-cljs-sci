@@ -1,8 +1,41 @@
 {:tasks
- {shadow-server (shell "clj -M -m shadow.cljs.devtools.cli server")
+ {:requires ([babashka.fs :as fs]
+             [clojure.string :as str]
+             [cheshire.core :as json])
+  shadow-server (shell "clj -M -m shadow.cljs.devtools.cli server")
   shadow-compile (shell "npx shadow-cljs compile :app")
   shadow-node-repl (shell "npx shadow-cljs node-repl")
   release (shell "npx shadow-cljs --force-spawn release app")
   publish (shell "npm publish")
   node-server (shell "node run-server.js")
-  nrepl-client (shell "clojure -M:repl/rebel")}}
+  nrepl-client (shell "clojure -M:repl/rebel")
+  jar (do
+        (def version (-> "package.json"
+                         slurp
+                         (json/parse-string true)
+                         :version))
+        (def git-sha (-> (shell {:out :string} "git rev-parse HEAD")
+                         :out
+                         (.trim)))
+
+        (fs/create-dirs "target/prod")
+        (spit "target/prod/nrepl-cljs-sci-version.edn" (pr-str {:version version}))
+
+        ;; Make pom.xml
+        (fs/copy "pom-template.xml" "pom.xml" {:replace-existing true})
+        (clojure "-Srepro -Spom")
+        (spit "pom.xml" (-> "pom.xml"
+                            slurp
+                            (.replace "VERSION" version)
+                            (.replace "GIT_SHA" git-sha)))
+        (fs/move "pom.xml" "target/pom.xml" {:replace-existing true})
+
+        ;; Make jar
+        (clojure "-Srepro -A:pack mach.pack.alpha.skinny --no-libs -e target/prod --project-path target/nrepl-cljs-sci.jar"))
+  deploy-clojars {:depends [jar]
+                  :task (shell (str/join " "
+                                         ["mvn deploy:deploy-file"
+                                          "-Dfile=target/nrepl-cljs-sci.jar"
+                                          "-DrepositoryId=clojars"
+                                          "-Durl=https://clojars.org/repo"
+                                          "-DpomFile=target/pom.xml"]))}}}
