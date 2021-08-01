@@ -1,2 +1,3 @@
 {:tasks
- {compile (shell "clj -M -m shadow.cljs.devtools.cli compile :app")}}
+ {compile (shell "clj -M -m shadow.cljs.devtools.cli compile :app")
+  run-app (shell "node out/app.js")}}

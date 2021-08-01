@@ -1,5 +1,7 @@
 # nrepl-cljs-sci usage example
 
+Use nrepl-cljs-sci in a Javascript project.
+
 ```
 npm install
 node index.js
