@@ -4,7 +4,41 @@
 
 ## Usage
 
-See [example](./example) directory
+nrepl-cljs-sci can be used both in plain JS projects and in CLJS projects. See [example/js](./example/js) for JS project example and [example/cljs](./example/cljs).
+
+The `start_server` (`start-server` in CLJS) function takes an argument, that can be a JS object or a Clojure map. You can pass a reference to application state under the `app` key, which is the available at the nrepl repl under `app/app` symbol.
+
+For example, use from JS project:
+
+```
+$ cd example/js
+$ node index.js
+Example app listening at http://localhost:3000
+2021-08-01T18:48:35.553Z INFO [nrepl-cljs-sci.core:206] - nRepl server started on port 59600. nrepl-cljs-sci version 0.0.10
+```
+
+Then, in another shell:
+
+```
+$ curl http://localhost:3000
+Hello World!
+```
+
+Connect to the nRepl server and run the following:
+
+```
+user> app/app
+#js {:app #object[app], :root #js {:response "Hello World!"}}
+user> (set! (.-response (.-root app/app)) "Hello SCI!")
+nil
+```
+
+Now, check the result via curl:
+
+```
+$ curl http://localhost:3000
+Hello SCI!
+```
 
 ## Development instructions
 

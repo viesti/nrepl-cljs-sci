@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.11
+
+* Fix version string reading
+* Support release to clojars
+* Support use from JS and CLJS
+
 ## 0.0.10
 
 * Print out port number on server start

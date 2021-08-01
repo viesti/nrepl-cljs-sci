@@ -160,19 +160,32 @@
        ;; We inform SCI to not create a namespace alias
        :omit-as-alias? true})))
 
-(defn start-server [opts]
-  (let [{:keys [port log_level ctx]
-         :or {port 0 ;; Use random port if not specified
-              log_level "info"} :as _opts} (if (object? opts)
-                                             (js->clj opts :keywordize-keys true)
-                                             opts)
+(defn start-server
+  "Start nRepl server. Accepts options either as JS object or Clojure map."
+  [opts]
+  (let [port (or (if (object? opts)
+                   (.-port ^Object opts)
+                   (:port opts))
+                 ;; Use random port if not specified
+                 0)
+        log_level (or (if (object? opts)
+                        (.-log_level ^Object opts)
+                        (:log_level opts))
+                      "info")
+        ctx (if (object? opts)
+              (.-ctx_level ^Object opts)
+              (:ctx opts))
+        app (if (object? opts)
+              (.-app ^Object opts)
+              (:app opts))
         sci-last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
         ctx-atom (atom nil)
         ctx (or ctx
-                (sci/init {:namespaces {'clojure.core {'*e sci-last-error}
-                                        'clojure.main {'repl-requires (sci/new-var 'repl-requires [["os" :as 'os]])}
-                                        'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}
-                                        'sci.internal {'ctx-atom (sci/new-var 'ctx-atom ctx-atom)}}
+                (sci/init {:namespaces (cond-> {'clojure.core {'*e sci-last-error}
+                                                'clojure.main {'repl-requires (sci/new-var 'repl-requires [["os" :as 'os]])}
+                                                'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}
+                                                'nrepl-cljs-sci.internal {'ctx-atom (sci/new-var 'ctx-atom ctx-atom)}}
+                                         app (assoc 'app {'app (sci/new-var 'app app)}))
                            :classes {'js goog/global
                                      'System (let [system (js-obj)]
                                                (set! (.-getProperty system) (fn [prop]
