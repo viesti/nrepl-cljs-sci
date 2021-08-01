@@ -1,6 +1,6 @@
 {
   "name": "nrepl-cljs-sci",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "nREPL server for nodejs using Small Clojure Interpreter (SCI)",
   "main": "out/dist.js",
   "scripts": {
