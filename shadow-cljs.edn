@@ -1,4 +1,6 @@
 {:deps true
+ ;; Disable cache from the namespace containing a macro that reads package.json version number
+ :cache-blockers #{nrepl-cljs-sci.version}
  :builds {:app {:target :node-library
                 :output-to "out/dist.js"
                 :exports {:start_server nrepl-cljs-sci.core/start-server
