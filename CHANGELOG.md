@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.12
+
+* Replace app/app with js/app, for exposing objects to the nrepl server
+* Handle error on writing .nrepl-port file
+
 ## 0.0.11
 
 * Fix version string reading

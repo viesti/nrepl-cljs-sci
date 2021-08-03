@@ -1,6 +1,6 @@
 {:paths ["src"]
  :deps {thheller/shadow-cljs {:mvn/version "2.15.2"}
-        org.clojars.viesti/nrepl-cljs-sci {:mvn/version "0.0.11"
+        org.clojars.viesti/nrepl-cljs-sci {:mvn/version "0.0.12"
                                            #_#_:git/url "https://github.com/viesti/nrepl-cljs-sci"
                                            #_#_:sha "2a589127459b644f03857e5a920170c4edeb06a8"
                                            #_#_:local/root "../../"}
