@@ -206,7 +206,10 @@
                  (timbre/infof "nRepl server started on port %d . nrepl-cljs-sci version %s"
                                port
                                (version/get-version))
-                 (.writeFileSync fs ".nrepl-port" (str port)))))
+                 (try
+                   (.writeFileSync fs ".nrepl-port" (str port))
+                   (catch :default e
+                     (timbre/warn "Could not write .nrepl-port" e))))))
     server)
   (let [onExit (js/require "signal-exit")]
     (onExit (fn [_code _signal]
