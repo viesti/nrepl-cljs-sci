@@ -19,7 +19,7 @@ var nrepl_server = nrepl.start_server(
   {
     // Pass reference to application with the 'app' key
     app: {
-      app: app,
+      express_app: app,
       root: root
     }
   });

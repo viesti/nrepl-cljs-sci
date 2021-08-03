@@ -181,11 +181,10 @@
         sci-last-error (sci/new-var '*e nil {:ns (sci/create-ns 'clojure.core)})
         ctx-atom (atom nil)
         ctx (or ctx
-                (sci/init {:namespaces (cond-> {'clojure.core {'*e sci-last-error}
-                                                'clojure.main {'repl-requires (sci/new-var 'repl-requires [["os" :as 'os]])}
-                                                'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}
-                                                'nrepl-cljs-sci.internal {'ctx-atom (sci/new-var 'ctx-atom ctx-atom)}}
-                                         app (assoc 'app {'app (sci/new-var 'app app)}))
+                (sci/init {:namespaces {'clojure.core {'*e sci-last-error}
+                                        'clojure.main {'repl-requires (sci/new-var 'repl-requires [["os" :as 'os]])}
+                                        'nrepl.core {'version (sci/new-var 'version {:version-string (str "nrepl-cljs-sci" (version/get-version))})}
+                                        'nrepl-cljs-sci.internal {'ctx-atom (sci/new-var 'ctx-atom ctx-atom)}}
                            :classes {'js goog/global
                                      'System (let [system (js-obj)]
                                                (set! (.-getProperty system) (fn [prop]
@@ -197,6 +196,9 @@
                            :load-fn (partial load-fn ctx-atom)}))
         server (node-net/createServer (partial on-connect {:sci-last-error sci-last-error
                                                            :sci-ctx-atom ctx-atom}))]
+    ;; Expose "app" key under js/app in the repl
+    (set! (.-app js/goog.global) #js {:app app})
+
     (reset! ctx-atom ctx)
     (timbre/set-level! (keyword log_level))
     (.listen server
