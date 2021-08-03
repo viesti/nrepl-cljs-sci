@@ -1,5 +1,8 @@
 # nrepl-cljs-sci
 
+[![npm version](https://img.shields.io/npm/v/nrepl-cljs-sci.svg)](https://www.npmjs.com/package/nrepl-cljs-sci) 
+[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.viesti/nrepl-cljs-sci.svg)](https://clojars.org/org.clojars.viesti/nrepl-cljs-sci)
+
 [nREPL](https://nrepl.org/nrepl/0.8/index.html) server for NodeJS using [SCI](https://github.com/borkdude/sci).
 
 ## Usage
