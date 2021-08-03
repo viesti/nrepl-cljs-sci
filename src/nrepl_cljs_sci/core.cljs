@@ -203,7 +203,7 @@
              port
              (fn []
                (let [port (-> server (.address) .-port)]
-                 (timbre/infof "nRepl server started on port %d. nrepl-cljs-sci version %s"
+                 (timbre/infof "nRepl server started on port %d . nrepl-cljs-sci version %s"
                                port
                                (version/get-version))
                  (.writeFileSync fs ".nrepl-port" (str port)))))
