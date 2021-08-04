@@ -9,7 +9,7 @@
 
 nrepl-cljs-sci can be used both in plain JS projects and in CLJS projects. See [example/js](./example/js) for JS project example and [example/cljs](./example/cljs).
 
-The `start_server` (`start-server` in CLJS) function takes an argument, that can be a JS object or a Clojure map. You can pass a reference to application state under the `app` key, which is the available at the nrepl repl under `app/app` symbol.
+The `start_server` (`start-server` in CLJS) function takes an argument, that can be a JS object or a Clojure map. You can pass a reference to application state under the `app` key, which is the available at the nrepl repl under `js/app` symbol.
 
 For example, use from JS project:
 
