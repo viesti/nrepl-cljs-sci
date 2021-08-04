@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.13
+
+* Remove extra "app" key from js/app
+
 ## 0.0.12
 
 * Replace app/app with js/app, for exposing objects to the nrepl server

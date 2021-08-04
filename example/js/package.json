@@ -1,6 +1,6 @@
 {
   "dependencies": {
     "express": "^4.17.1",
-    "nrepl-cljs-sci": "0.0.12"
+    "nrepl-cljs-sci": "0.0.13"
   }
 }
