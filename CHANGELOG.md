@@ -3,6 +3,7 @@
 ## 0.0.13
 
 * Remove extra "app" key from js/app
+* Don't try to remove port file if it doesn't exist
 
 ## 0.0.12
 
