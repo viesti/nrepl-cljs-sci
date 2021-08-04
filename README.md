@@ -31,8 +31,8 @@ Connect to the nRepl server and run the following:
 
 ```
 user> js/app
-#js {:app #js {:express_app #object[app], :root #js {:response "Hello World!"}}}
-user> (set! (.. js/app -app -root -response) "Hello SCI!")
+#js {:express_app #object[app], :root #js {:response "Hello World!"}}
+user> (set! (.-response js/app.root) "Hello SCI!")
 nil
 ```
 
