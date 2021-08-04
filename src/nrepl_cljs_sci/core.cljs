@@ -197,7 +197,7 @@
         server (node-net/createServer (partial on-connect {:sci-last-error sci-last-error
                                                            :sci-ctx-atom ctx-atom}))]
     ;; Expose "app" key under js/app in the repl
-    (set! (.-app js/goog.global) #js {:app app})
+    (set! (.-app js/goog.global) app)
 
     (reset! ctx-atom ctx)
     (timbre/set-level! (keyword log_level))
