@@ -221,4 +221,5 @@
 (defn stop-server [server]
   (.close server
           (fn []
-            (fs/unlinkSync ".nrepl-port"))))
+            (when (fs/existsSync ".nrepl-port")
+              (fs/unlinkSync ".nrepl-port")))))
