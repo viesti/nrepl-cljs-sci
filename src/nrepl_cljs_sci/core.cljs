@@ -3,7 +3,6 @@
             [nrepl-cljs-sci.bencode :refer [encode decode-all]]
             [sci.core :as sci]
             [taoensso.timbre :as timbre]
-            ["uuid" :as uuid]
             ["fs" :as fs])
   (:require-macros [nrepl-cljs-sci.version :as version]))
 
@@ -85,7 +84,7 @@
                   send-fn))
 
 (defn handle-clone [request send-fn]
-  (send-fn request {"new-session" (uuid/v4)
+  (send-fn request {"new-session" (str (random-uuid))
                     "status" ["done"]}))
 
 (defn handle-close [request send-fn]
